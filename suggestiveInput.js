@@ -1,8 +1,6 @@
 /********* Suggestive javascript input box **********************/
 /********* Written by Michael Joy for free open source use ******/
 
-//Holds the number of times suggestion boxes have been printed...
-//var suggestiveInputCount=1;
 
 var suggestionBoxVisible = 0;
 var activeSuggestion=0;
@@ -38,9 +36,7 @@ function suggestiveInput(inputName, options){
 	document.write("<ul></div>");
 	
 	suggestionOptions = options;
-	
-	//suggestiveInputCount++;
-	
+		
 }
 
 
@@ -55,14 +51,15 @@ $(document).ready(function(){
 		if (mykeycode == 40 || mykeycode == 38)
         {
         	
+        	//Remove the red and bold from last selection
         	if( activeSuggestion != 0){
         		
-        		//Return old Li item to red..
         		$("#suggestion"+activeSuggestion).css('color', '#999');
         		$("#suggestion"+activeSuggestion).css('font-weight', 'normal');
         		
         	}
         	
+        	//Change the active selection depending on whether up or down key is pressed
         	if (mykeycode == 40 && (activeSuggestion+1) < suggestions.length){
 	        	activeSuggestion++;
         	}else if(mykeycode == 38 && activeSuggestion > 0){
@@ -71,12 +68,12 @@ $(document).ready(function(){
         	}
         	
         	
-        	
+        	//Set selection to red and bold
         	$("#suggestion"+activeSuggestion).css('color', 'red');
         	$("#suggestion"+activeSuggestion).css('font-weight', 'bold');
         	
+        	//Edit the hidden field
         	editField(suggestions[activeSuggestion]);
-        	//alert(activeSuggestion);
        
         }else if (mykeycode == 39){
         			
@@ -86,9 +83,9 @@ $(document).ready(function(){
         	
         	
         }else{
-        	
+        	//Some other character was pressed so begin searching..
+        	//Reset active suggestion
         	activeSuggestion=0;
-        	//lastCompany = 0;
 			
 			if ($("#suggestiveInput").val() != ""){
 				
@@ -97,8 +94,8 @@ $(document).ready(function(){
 				var suggestionList = "";
 				var i = 1;
 				for (var optionValue in suggestionOptions) {
+					
 					if (suggestionOptions.hasOwnProperty(optionValue)) { 
-						
 						
 						var option = suggestionOptions[optionValue].toLowerCase();
 						
@@ -123,12 +120,11 @@ $(document).ready(function(){
 				$("#suggestionList").html(suggestionList);
 				
 				//show suggestions...
-				
 				showSuggestionBox();
 				
 			}else{
-				//nothing in text field.. hide
 				
+				//nothing in text field.. hide
 				hideSuggestionBox();
 			}
 		}
@@ -137,14 +133,7 @@ $(document).ready(function(){
 			
 	
 	$("#suggestiveInput").blur(function(event){
-		
-		//We want to cehck if there was one more suggestion...
-		//if(suggestionIds.length==1){
-			
-		//	editField(items[suggestionIds[0]]);
-		//	hideSuggestionBox();
-		//}
-		
+				
 		hideSuggestionBox();
 	
 	})
@@ -183,7 +172,6 @@ $(document).ready(function(){
 
 function editField(item){
 	
-	//alert(item);
 	$("#suggestiveInput").val(suggestionOptions[item]);
 	
 	//We want to set our hidden field to the id of this new item..
