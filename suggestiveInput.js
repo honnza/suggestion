@@ -2,10 +2,11 @@
 /********* Written by Michael Joy for free open source use ******/
 
 
-var suggestionBoxVisible = 0;
-var activeSuggestion=0;
-var suggestionOptions;
+var suggestionBoxVisible = new Array();
+var activeSuggestion = new Array();
+var suggestionOptions = new Array();
 var suggestions = new Array();
+var suggestionCount = 0;
 
 
 with (document) {
@@ -13,6 +14,7 @@ with (document) {
 	//Write the style for the suggestion box and input
 	writeln('<style>');
 	writeln('.suggestions{background-color: white;border: 1px solid #A2BFF0; border-top: 0px; width:198px; visibility: hidden; position: absolute;}');
+	writeln('.suggestionContainer{padding:10px;}');
 	writeln('ul.suggestionList{margin: 1px; padding: 0px; list-style: none;background-color: white;}');
 	writeln('ul.suggestionList li{background-color: #fff; text-align: left;}');
 	writeln('ul.suggestionList li a{ display: block; text-decoration: none;font-size: 11px; color: #999; border: none; background-color: white;}');
@@ -27,23 +29,31 @@ with (document) {
 function suggestiveInput(inputName, options){
 	
 	
+	suggestionCount++;
+	var inputId = "suggestiveInput"+suggestionCount;
+	
+	activeSuggestion[inputId] = 0;
+	suggestionBoxVisible[inputId]=0;
+	suggestionOptions[inputId] = options;
+	suggestions[inputId] = new Array();
 	
 	//Print input box and suggestion container
-	document.write("<input spellcheck=\"false\" autocomplete=\"off\" class=\"suggestiveInput\" id=\"suggestiveInput\" type=\"text\" >");
-	document.write("<input type=\"hidden\" id=\"suggestiveInputValue\" name=\""+inputName+"\">");
-	document.write("<div class=\"suggestions\" id=\"suggestions\">");
-	document.write("<ul class=\"suggestionList\" id=\"suggestionList\">");
-	document.write("<ul></div>");
+	document.write("<div class=\"suggestionContainer\">");
+	document.write("<input spellcheck=\"false\" autocomplete=\"off\" class=\"suggestiveInput\" id=\""+inputId+"\" type=\"text\" >");
+	document.write("<input type=\"hidden\" id=\""+inputId+"InputValue\" name=\""+inputName+"\">");
+	document.write("<div class=\"suggestions\" id=\""+inputId+"Suggestions\">");
+	document.write("<ul class=\"suggestionList\" id=\""+inputId+"SuggestionList\">");
+	document.write("<ul></div></div>");
 	
-	suggestionOptions = options;
+	
 		
 }
 
 
 $(document).ready(function(){
 	
-	$("#suggestiveInput").keyup(function(event){
-		
+	$(".suggestiveInput").keyup(function(event){
+		//alert( this.id );
 		//Get the key pressed
 		var nbr = (window.event)?event.keyCode:event.which;
   		var mykeycode= nbr;
@@ -52,28 +62,27 @@ $(document).ready(function(){
         {
         	
         	//Remove the red and bold from last selection
-        	if( activeSuggestion != 0){
+        	if( activeSuggestion[this.id] != 0){
         		
-        		$("#suggestion"+activeSuggestion).css('color', '#999');
-        		$("#suggestion"+activeSuggestion).css('font-weight', 'normal');
+        		$("#"+this.id+"Suggestion"+activeSuggestion[this.id]).css('color', '#999');
+        		$("#"+this.id+"Suggestion"+activeSuggestion[this.id]).css('font-weight', 'normal');
         		
         	}
         	
         	//Change the active selection depending on whether up or down key is pressed
-        	if (mykeycode == 40 && (activeSuggestion+1) < suggestions.length){
-	        	activeSuggestion++;
-        	}else if(mykeycode == 38 && activeSuggestion > 0){
-        		activeSuggestion--;
-        		
+        	if (mykeycode == 40 && (activeSuggestion[this.id]+1) < suggestions[this.id].length){
+	        	activeSuggestion[this.id]++;
+        	}else if(mykeycode == 38 && activeSuggestion[this.id] > 0){
+        		activeSuggestion[this.id]--;
         	}
         	
         	
         	//Set selection to red and bold
-        	$("#suggestion"+activeSuggestion).css('color', 'red');
-        	$("#suggestion"+activeSuggestion).css('font-weight', 'bold');
-        	
+        	$("#"+this.id+"Suggestion"+activeSuggestion[this.id]).css('color', 'red');
+        	$("#"+this.id+"Suggestion"+activeSuggestion[this.id]).css('font-weight', 'bold');
+
         	//Edit the hidden field
-        	editField(suggestions[activeSuggestion]);
+        	editField(suggestions[this.id][activeSuggestion[this.id]], this.id);
        
         }else if (mykeycode == 39){
         			
@@ -85,97 +94,101 @@ $(document).ready(function(){
         }else{
         	//Some other character was pressed so begin searching..
         	//Reset active suggestion
-        	activeSuggestion=0;
+        	activeSuggestion[this.id]=0;
 			
-			if ($("#suggestiveInput").val() != ""){
+			if ($("#"+this.id).val() != ""){
 				
 				//Loop through options and see if any matches..
-				suggestions = new Array();
+				suggestions[this.id] = new Array();
 				var suggestionList = "";
 				var i = 1;
-				for (var optionValue in suggestionOptions) {
+				for (var optionValue in suggestionOptions[this.id]) {
 					
-					if (suggestionOptions.hasOwnProperty(optionValue)) { 
+					if (suggestionOptions[this.id].hasOwnProperty(optionValue)) { 
 						
-						var option = suggestionOptions[optionValue].toLowerCase();
+						var option = suggestionOptions[this.id][optionValue].toLowerCase();
 						
 						//Search string
-						var searchString = $("#suggestiveInput").val().toLowerCase();
+						var searchString = $("#"+this.id).val().toLowerCase();
 						
 						var index = option.search(searchString);
 					
 						if(index!=-1){
 							//match found..
-							suggestions[i] = optionValue;
+							suggestions[this.id][i] = optionValue;
 							
-							var listItem = suggestionOptions[optionValue].substring(0,(index))+"<b><font color=\"black\">"+suggestionOptions[optionValue].substring((index),(index+searchString.length))+"</font></b>"+suggestionOptions[optionValue].substring((index+searchString.length),(option.length));
+							var listItem = suggestionOptions[this.id][optionValue].substring(0,(index))+"<b><font color=\"black\">"+suggestionOptions[this.id][optionValue].substring((index),(index+searchString.length))+"</font></b>"+suggestionOptions[this.id][optionValue].substring((index+searchString.length),(option.length));
 							
-							suggestionList+="<li><a id=\"suggestion"+i+"\" href=\"javascript:editField('"+optionValue+"')\">"+listItem+"</a>";
+							suggestionList+="<li><a id=\""+this.id+"Suggestion"+i+"\" href=\"javascript:editField('"+optionValue+"','"+this.id+"')\">"+listItem+"</a>";
 							i++;
 							
 						}
 					}
 				}
 				
-				$("#suggestionList").html(suggestionList);
+				$("#"+this.id+"SuggestionList").html(suggestionList);
 				
 				//show suggestions...
-				showSuggestionBox();
+				showSuggestionBox(this.id);
 				
 			}else{
 				
 				//nothing in text field.. hide
-				hideSuggestionBox();
+				hideSuggestionBox(this.id);
 			}
 		}
 	})
 			
 			
 	
-	$("#suggestiveInput").blur(function(event){
-				
-		hideSuggestionBox();
+	$(".suggestiveInput").blur(function(event){
+		
+		//If this field is required, and there is only one suggestion, auto fill it..
+		//if( suggestions.length == 1 && 
+		
+		
+		hideSuggestionBox(this.id);
 	
 	})
 	
 	
-	function showSuggestionBox(){
+	function showSuggestionBox(inputId){
 	
-		if(suggestionBoxVisible==0){
+		if(suggestionBoxVisible[inputId]==0){
 			//we need to show it..
 			
-			$("#suggestions").fadeIn('slow', function(){
-				$("#suggestions").css('visibility', 'visible');
-				$("#suggestions").hide();
-				$("#suggestions").fadeIn('slow');
+			$("#"+inputId+"Suggestions").fadeIn('slow', function(){
+				$("#"+inputId+"Suggestions").css('visibility', 'visible');
+				$("#"+inputId+"Suggestions").hide();
+				$("#"+inputId+"Suggestions").fadeIn('slow');
 			});
 					
-			suggestionBoxVisible=1;
+			suggestionBoxVisible[inputId]=1;
 		}
 	}
 	
-	function hideSuggestionBox(){
+	function hideSuggestionBox(inputId){
 		
-		if(suggestionBoxVisible==1){
+		if(suggestionBoxVisible[inputId]==1){
 			//we need to hide it..
 			
-			$("#suggestions").fadeOut('fast', function(){
-				$("#suggestions").css('visibility', 'hidden');
+			$("#"+inputId+"Suggestions").fadeOut('fast', function(){
+				$("#"+inputId+"Suggestions").css('visibility', 'hidden');
 			});
 			
-			suggestionBoxVisible=0;
+			suggestionBoxVisible[inputId]=0;
 		}
 	}
 	
 	
 })
 
-function editField(item){
+function editField(item, inputId){
 	
-	$("#suggestiveInput").val(suggestionOptions[item]);
+	$("#"+inputId).val(suggestionOptions[inputId][item]);
 	
 	//We want to set our hidden field to the id of this new item..
-	$("#suggestiveInputValue").val(item);
+	$("#"+inputId+"InputValue").val(item);
 	
 	
 	blur();
