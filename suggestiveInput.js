@@ -6,7 +6,17 @@ var suggestionBoxVisible = new Array();
 var activeSuggestion = new Array();
 var suggestionOptions = new Array();
 var suggestions = new Array();
+var suggestionRequired = new Array();
+var suggestionAdditionalLinks = new Array();
 var suggestionCount = 0;
+
+Object.size = function(obj) {
+    var size = 0, key;
+    for (key in obj) {
+        if (obj.hasOwnProperty(key)) size++;
+    }
+    return size;
+};
 
 
 with (document) {
@@ -21,21 +31,30 @@ with (document) {
 	writeln('ul.suggestionList li:hover{background: #D5E2FF; text-decoration: none;}');
 	writeln('input.suggestiveInput{color: grey;width: 200px;border: 1px solid grey;background: url(\'images/searchIcon.png\') no-repeat;background-position: right center;background-repeat: no-repeat;margin:0px;}');
 	writeln('input.suggestiveInput:focus{outline-width: 0;}');
+	writeln('a.javaLink{cursor: pointer;}');
 	writeln('</style>');
 	
 }
 
 
-function suggestiveInput(inputName, options){
-	
+function suggestiveInput(inputName, options, required, functionLinks ){
 	
 	suggestionCount++;
 	var inputId = "suggestiveInput"+suggestionCount;
 	
+	if(required==null)required = 0;
+	
+	if(functionLinks!=null){
+		
+		suggestionAdditionalLinks[inputId] = functionLinks;
+	}
+	
+	
+	suggestionRequired[inputId] = required;
 	activeSuggestion[inputId] = 0;
 	suggestionBoxVisible[inputId]=0;
 	suggestionOptions[inputId] = options;
-	suggestions[inputId] = new Array();
+	//suggestions[inputId] = new Array();
 	
 	//Print input box and suggestion container
 	document.write("<div class=\"suggestionContainer\">");
@@ -70,7 +89,7 @@ $(document).ready(function(){
         	}
         	
         	//Change the active selection depending on whether up or down key is pressed
-        	if (mykeycode == 40 && (activeSuggestion[this.id]+1) < suggestions[this.id].length){
+        	if (mykeycode == 40 && (activeSuggestion[this.id]) < Object.size(suggestions[this.id])){
 	        	activeSuggestion[this.id]++;
         	}else if(mykeycode == 38 && activeSuggestion[this.id] > 0){
         		activeSuggestion[this.id]--;
@@ -100,10 +119,11 @@ $(document).ready(function(){
 				
 				//Loop through options and see if any matches..
 				suggestions[this.id] = new Array();
+				
 				var suggestionList = "";
 				var i = 1;
 				for (var optionValue in suggestionOptions[this.id]) {
-					
+					//alert(Object.size(suggestions[this.id]));
 					if (suggestionOptions[this.id].hasOwnProperty(optionValue)) { 
 						
 						var option = suggestionOptions[this.id][optionValue].toLowerCase();
@@ -119,10 +139,18 @@ $(document).ready(function(){
 							
 							var listItem = suggestionOptions[this.id][optionValue].substring(0,(index))+"<b><font color=\"black\">"+suggestionOptions[this.id][optionValue].substring((index),(index+searchString.length))+"</font></b>"+suggestionOptions[this.id][optionValue].substring((index+searchString.length),(option.length));
 							
-							suggestionList+="<li><a id=\""+this.id+"Suggestion"+i+"\" href=\"javascript:editField('"+optionValue+"','"+this.id+"')\">"+listItem+"</a>";
+							suggestionList+="<li><a class=\"javaLink\" id=\""+this.id+"Suggestion"+i+"\" onClick=\"editField('"+optionValue+"','"+this.id+"')\">"+listItem+"</a>";
 							i++;
 							
 						}
+					}
+				}
+				
+				for (var linkName in suggestionAdditionalLinks[this.id]) {
+					if (suggestionAdditionalLinks[this.id].hasOwnProperty(linkName)) { 
+						// or if (Object.prototype.hasOwnProperty.call(obj,prop)) for safety...
+						alert("prop: " + linkName + " value: " + suggestionAdditionalLinks[this.id][linkName])
+						suggestionList+="<li><a class=\"javaLink\" onClick=\""+suggestionAdditionalLinks[this.id][linkName]+"\">"+linkName+"</a>";
 					}
 				}
 				
@@ -144,10 +172,17 @@ $(document).ready(function(){
 	$(".suggestiveInput").blur(function(event){
 		
 		//If this field is required, and there is only one suggestion, auto fill it..
-		//if( suggestions.length == 1 && 
+		
+		if( suggestionRequired[this.id] == 1 && Object.size(suggestions[this.id]) == 1){
+			
+			editField( suggestions[this.id][1], this.id );
+		}else{
+			
+			//alert("required: "+suggestionRequired[this.id]+" length: "+suggestions[this.id].length+" Value: "+suggestions[this.id]);
+		}
 		
 		
-		hideSuggestionBox(this.id);
+		hideSuggestionBox([this.id]);
 	
 	})
 	
